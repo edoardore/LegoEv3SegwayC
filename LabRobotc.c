@@ -1,121 +1,107 @@
-float calibrate_gyro(int loops);
-float gyroRate(int readings);
-float control(float Theta, float Psi, float Theta_dot, float Psi_dot, float Theta_int);
+#pragma config(Sensor, S4,     Gyro,           sensorEV3_Gyro, modeEV3Gyro_RateAndAngle)
+#pragma config(Motor,  motorA,          rightMotor,    tmotorEV3_Large, openLoop, driveRight, encoder)
+#pragma config(Motor,  motorD,          leftMotor,     tmotorEV3_Large, openLoop, driveLeft, encoder)
 
-task main()
-{
-	float offset=calibrate_gyro(5)*PI/180;
-	wait1Msec(1000);
+float calibrate_gyro();
+
+task main(){
+	eraseDisplay();
+	displayCenteredBigTextLine(2, "Calibrate Zero");
+	float offset=calibrate_gyro();
+	writeDebugStream("offset is: %f\n", offset);
+	resetGyro(Gyro);
+	sleep(4000);
+	playSound(soundBeepBeep);
+	eraseDisplay();
+	displayCenteredBigTextLine(2, "Put on rack");
+	sleep(5000);
+	resetMotorEncoder(rightMotor);
+	resetMotorEncoder(leftMotor);
+	eraseDisplay();
+	displayCenteredBigTextLine(2, "Balancing");
 	float u;
 	float ThetaList[2];
 	ThetaList[0]=0;
 	ThetaList[1]=0;
-	int ThetaTimeList[2];
-	ThetaTimeList[0]=0;
-	ThetaTimeList[1]=0;
-	float Psi_dotList[2];
-	Psi_dotList[0]=0;
-	Psi_dotList[1]=0;
-	int Psi_dotTimeList[2];
-	Psi_dotTimeList[0]=0;
-	Psi_dotTimeList[1]=0;
 	int count=0;
+	float t=0.01;
 	float Theta;
-	float Psi;
-	float Theta_dot;
+	float Psi=0;
+	float Theta_dot=0;
 	float Psi_dot;
-	float Theta_int;
-	float integrate_Psi=0;
-	float integrate_Theta=0;
+	float Theta_int=0;
 	float angleDx;
 	float angleSx;
 	float ThetaM;
-	float t;
-	float millisecondsStart=time1[T1];
+	float ThetaRad;
+	float PsiRad;
+	float Psi_dotRad;
+	float Theta_dotRad;
+	float Theta_intRad;
+	time1[T1]=0;
 	while(true){
-		t=time1[T1];
-		if((t-millisecondsStart)>10000 && Psi>0){
+		if(time1[T1]>10000 && Psi<= 0){
 			moveMotorTarget(motorB, -getMotorEncoder(motorB), -100);
-			setMotorSpeed(motorA, 0);
-			setMotorSpeed(motorD, 0);
+			setMotorSpeed(rightMotor, 0);
+			setMotorSpeed(leftMotor, 0);
 			sleep(1000);
 			break;
 		}
-		if(count==0){
-			Theta=-8.7*PI/180;
-			Psi=-8.7*PI/180;
-			Theta_dot=0;
-			Psi_dot=0;
-			Theta_int=0;
-			Psi_dotTimeList[1]=time1[T1];
-			ThetaTimeList[1]=time1[T1];
-		}
-		u=control(Theta, Psi, Theta_dot, Psi_dot, Theta_int);
-		count=count+1;
-		u=u*100/9;
-		if (u>100)
-			u=100;
-		if (u<-100)
-			u=-100;
-		setMotorSpeed(motorA, u);
-		setMotorSpeed(motorD, u);
-		if (count==150){
-			//rackUp
-			moveMotorTarget(motorB, 110, 80);
-		}
-		if(count%250==0){
-			angleDx=getMotorEncoder(motorA);
-			angleSx=getMotorEncoder(motorB);
-			ThetaM=(angleDx+angleSx)/2;
-			ThetaM=ThetaM*PI/180;
-			//writeDebugStream("ThetaM is: %f\n", ThetaM);
-			Psi_dot=getGyroRate(S4);
-			Psi_dot=Psi_dot*PI/180;
-			Psi_dot=Psi_dot-offset;
-			//writeDebugStream("Psi_dot is: %f\n", Psi_dot);
-			Psi_dotList[0]=Psi_dotList[1];
-			Psi_dotList[1]=Psi_dot;
-			Psi_dotTimeList[0]=Psi_dotTimeList[1];
-			Psi_dotTimeList[1]=time1[T1];
-			integrate_Psi+=Psi_dotList[1]*(Psi_dotTimeList[1]-Psi_dotTimeList[0]);
-			Psi=integrate_Psi;
-			//writeDebugStream("Psi is: %f\n", Psi);
-			Theta=ThetaM+Psi;
-			//writeDebugStream("Theta is: %f\n", Theta);
-			ThetaList[0]=ThetaList[1];
-			ThetaList[1]=Theta;
-			ThetaTimeList[0]=ThetaTimeList[1];
-			ThetaTimeList[1]=time1[T1];
-			Theta_dot=(ThetaList[1]-ThetaList[0])/(ThetaTimeList[1]-ThetaTimeList[0]);
+		//datalogDataGroupStart();
+		Psi_dot=-getGyroRate(Gyro)-offset;
+		//datalogAddValue(0, Psi_dot);
+		//writeDebugStream("Psi_dot is: %f\n", Psi_dot);
+		Psi=-getGyroDegrees(Gyro);
+		//datalogAddValue(1, Psi);
+		//writeDebugStream("Psi is: %f\n", Psi);
+		angleDx=getMotorEncoder(rightMotor);
+		angleSx=getMotorEncoder(leftMotor);
+		ThetaM=(angleDx+angleSx)/2;
+		//writeDebugStream("ThetaM is: %f\n", ThetaM);
+		Theta=ThetaM+Psi;
+		//datalogAddValue(2, Theta);
+		//writeDebugStream("Theta is: %f\n", Theta);
+		ThetaList[0]=ThetaList[1];
+		ThetaList[1]=Theta;
+		if (count>1){
+			Theta_dot=(ThetaList[1]-ThetaList[0])/t;
 			//writeDebugStream("Theta_dot is: %f\n", Theta_dot);
-			integrate_Theta+=ThetaList[1]*(ThetaTimeList[1]-ThetaTimeList[0]);
-			Theta_int=integrate_Theta;
+			Theta_int=Theta_int+(Theta*(t));
 			//writeDebugStream("Theta_int is: %f\n", Theta_int);
-			//writeDebugStream("------------------------------------\n");
 		}
+		//datalogAddValue(3, Theta_int);
+		//datalogAddValue(4, Theta_dot);
+		//datalogDataGroupEnd();
+		//writeDebugStream("------------------------------------\n");
+		count=count+1;
+		//writeDebugStream("count is %d ", count);
+		ThetaRad=Theta*PI/180;
+		PsiRad=Psi*PI/180;
+		Theta_dotRad=Theta_dot*PI/180;
+		Psi_dotRad=Psi_dot*PI/180;
+		Theta_intRad=Theta_int*PI/180;
+		u=(-0.8559*ThetaRad)+(-44.7896*PsiRad)+(-0.9936*Theta_dotRad)+(-4.6061*Psi_dotRad)+(-0.500*Theta_intRad);
+		u=-u*100/getBatteryVoltage();
+		//writeDebugStream("u is: %f\n", u);
+		setMotorSpeed(rightMotor, u);
+		setMotorSpeed(leftMotor, u);
+		if (count==15){
+			//rackUp
+			moveMotorTarget(motorB, 100, 10);
+		}
+		sleep(10);
 	}
 }
 
-float gyroRate(int readings){
-	float mean=0;
-	int i=0;
-	for(i=0; i<readings; i++)
-		mean=mean+getGyroRate(S4);
-	mean=mean/readings;
-	return mean;
-}
 
-
-float calibrate_gyro(int loops){
-	float mean=0;
-	int i=0;
-	for(i=0; i<loops; i++)
-		mean=mean+gyroRate(5);
-	mean=mean/loops;
-	return mean;
-}
-
-float control(float Theta, float Psi, float Theta_dot, float Psi_dot,float Theta_int){
-	float u=(-0.8559*Theta)+(-44.7896*Psi)+(-0.9936*Theta_dot)+(-4.6061*Psi_dot)+(-0.500*Theta_int);
-	return u;
+float calibrate_gyro(){
+	float angle=0;
+	float rate=0;
+	time1[T1]=0;
+	while(time1[T1]<5000){
+		angle=angle+(-getGyroRate(Gyro)*0.01);
+		sleep(10);
+	}
+	rate=angle/5;
+	return rate;
 }
