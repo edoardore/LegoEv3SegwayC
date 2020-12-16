@@ -5,6 +5,13 @@ Progetto laboratorio di controlli automatici
 Installare l'IDE [RobotC](https://www.robotc.net/) e aprire il file LabRobotc.c della repository. 
 Collegare il Lego EV-3 ed eseguire il programma.
 
+## LEGO EV-3 Setup
+![Lego1](https://github.com/edoardore/LegoEv3SegwayC/blob/main/Lego1.jpeg)
+![Lego2](https://github.com/edoardore/LegoEv3SegwayC/blob/main/Lego2.jpeg)
+![Lego3](https://github.com/edoardore/LegoEv3SegwayC/blob/main/Lego3.jpeg)
+
+
+
 ## Esecuzione
 Calibrare in posizione verticale il robot, dopo il suono è possibile appoggiarlo sul cavalletto. 
 Automaticamente si avvia il controllo e la stabilizzazione per una durata di 10 secondi fino a poi appoggiarsi nuovamente sul cavalletto.
