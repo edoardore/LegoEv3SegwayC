@@ -6,9 +6,10 @@ Installare l'IDE [RobotC](https://www.robotc.net/) e aprire il file LabRobotc.c 
 Collegare il Lego EV-3 ed eseguire il programma.
 
 ## LEGO EV-3 Setup
-![Lego1](https://github.com/edoardore/LegoEv3SegwayC/blob/main/Lego1.jpeg)
-![Lego2](https://github.com/edoardore/LegoEv3SegwayC/blob/main/Lego2.jpeg)
-![Lego3](https://github.com/edoardore/LegoEv3SegwayC/blob/main/Lego3.jpeg)
+<img src="https://github.com/edoardore/LegoEv3SegwayC/blob/main/Lego1.jpeg" width="420" height="480">
+<img src="https://github.com/edoardore/LegoEv3SegwayC/blob/main/Lego2.jpeg" width="420" height="480">
+<img src="https://github.com/edoardore/LegoEv3SegwayC/blob/main/Lego3.jpeg" width="420" height="480">
+
 
 
 
